@@ -33,7 +33,7 @@ Crie uma thread para cada carro.
 
 
 ### Entrega 2 (05/07/24)
-**Problema 3:** Barbeiro da Cidade
+**Problema 3:** [Barbeiro da Cidade](https://github.com/waltercrastobr/Projeto-Infrasoftware/blob/main/Barbearia.java)
 
 Uma barbearia consiste em uma sala de espera com n cadeiras e a sala do barbeiro contendo a cadeira do barbeiro. Se não houver clientes para atender, o barbeiro vai dormir. Se um cliente entra na barbearia e todas as cadeiras estão ocupadas, o cliente sai da loja. Se o barbeiro estiver ocupado, mas houver cadeiras disponíveis, o cliente senta-se em uma das cadeiras livres. Se o barbeiro estiver dormindo, o cliente acorda o barbeiro. Escreva um programa para coordenar o barbeiro e os clientes.
 
