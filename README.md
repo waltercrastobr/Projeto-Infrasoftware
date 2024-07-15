@@ -49,5 +49,26 @@ Observações:
 Lembre-se que os clientes que não foram atendidos devem esperar numa fila.
 Crie uma thread para cada cliente.
 
+### Entrega 3 (19/07/24)
+**Problema 5:** [Transporte]()
+
+New City está evoluindo e deseja criar um novo sistema para os ônibus da cidade. Onde a filosofia é que ninguém deve ir em pé no ônibus, ou seja, quando o ônibus atinge sua capacidade máxima de assentos, ninguém mais entra. Logo, você deve modelar um sistema para resolver o seguinte problema: Os passageiros chegam a um ponto de ônibus e esperam por um ônibus. Quando o ônibus chega, todos os passageiros tentam entrar, mas quem chega enquanto o ônibus está embarcando tem que esperar pelo próximo ônibus. A capacidade do ônibus é de 50 pessoas. Se houver mais de 50 pessoas esperando, algumas terão que esperar pelo próximo ônibus. Quando todos os passageiros em espera tiverem embarcado, o ônibus poderá partir. Se o ônibus chegar e estiver sem passageiros na parada, ele deverá partir imediatamente.
+
+Observações:
+Repare que não é formada uma fila para entrar no ônibus, quando o ônibus chega, todos tentam entrar ao mesmo tempo até que as cadeiras esgotem. 
+Crie threads para cada passageiro.
+Simule que o tempo do ônibus passar na parada varia entre 1 e 3 segundos.
+
+**Problema 6:** [Banheiro Unisex]()
+
+Está sendo implantado um novo projeto de banheiros unisex espalhados pela cidade. Mas há algumas regras nesses banheiros e você deve garantir que essas regras sejam seguidas.
+Não pode haver mulheres e homens no banheiro ao mesmo tempo.
+A capacidade máxima do banheiro é de 3 pessoas.
+
+Observações:
+Perceba que as pessoas podem demorar mais ou menos tempo dentro do banheiro.
+Perceba também que isso pode gerar um deadlock, então você deve garantir que isso não aconteça.
+Crie threads para cada pessoa.
+
 
 
