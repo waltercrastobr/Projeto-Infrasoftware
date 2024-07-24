@@ -1,118 +1,102 @@
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.Lock;
 
+// Classe que representa o banheiro unissex
+class Banheiro {
+    private final int capacidadeMaxima; // Capacidade máxima do banheiro
+    private int numeroPessoas; // Número de pessoas atualmente no banheiro
+    private String generoAtual; // Gênero das pessoas atualmente no banheiro
+    private final Semaphore semaphore; // Controle de acesso baseado na capacidade
+    private final Lock lock; // Lock para controle de concorrência
+
+    // Construtor do banheiro, inicializa os atributos
+    public Banheiro(int capacidade) {
+        this.capacidadeMaxima = capacidade;
+        this.numeroPessoas = 0;
+        this.generoAtual = null;
+        this.semaphore = new Semaphore(capacidade, true);
+        this.lock = new ReentrantLock(true);
+    }
+
+    // Método para uma pessoa tentar entrar no banheiro
+    public void entrar(String generoPessoa, int id) throws InterruptedException {
+        lock.lock();
+        try {
+            // Verifica se o banheiro está ocupado por outro gênero
+            if (generoAtual != null && !generoPessoa.equals(generoAtual)) {
+                System.out.println("Pessoa " + id + " (" + generoPessoa + ")" +
+                        " não conseguiu entrar pois tem " + generoAtual + " lá dentro.");
+            }
+            // Espera até que haja espaço e o gênero seja compatível
+            while (numeroPessoas == capacidadeMaxima ||
+                    (generoAtual != null && !generoPessoa.equals(generoAtual))) {
+                lock.unlock();
+                Thread.sleep(50); // Aguarda antes de tentar novamente
+                lock.lock();
+            }
+            semaphore.acquire(); // Adquire uma permissão para entrar
+            numeroPessoas++;
+            generoAtual = generoPessoa;
+            System.out.println("Pessoa " + id + " (" + generoPessoa + ")" +
+                    " entrou no banheiro (" + numeroPessoas + " de " + capacidadeMaxima + ")");
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    // Método para uma pessoa sair do banheiro
+    public void sair(String generoPessoa, int id) {
+        lock.lock();
+        try {
+            numeroPessoas--;
+            System.out.println("Pessoa " + id + " (" + generoPessoa + ")" +
+                    " saiu do banheiro (" + numeroPessoas + " de " + capacidadeMaxima + ")");
+            // Se o banheiro ficar vazio, reseta o gênero atual
+            if (numeroPessoas == 0) {
+                generoAtual = null;
+            }
+            semaphore.release(); // Libera uma permissão
+        } finally {
+            lock.unlock();
+        }
+    }
+}
+
+// Classe que representa uma pessoa tentando usar o banheiro
+class Pessoa implements Runnable {
+    private final Banheiro banheiro;
+    private final String generoPessoa;
+    private int id;
+
+    // Construtor da pessoa, inicializa os atributos
+    public Pessoa(Banheiro banheiro, String generoPessoa, int id) {
+        this.banheiro = banheiro;
+        this.generoPessoa = generoPessoa;
+        this.id = id;
+    }
+
+    // Método executado pela thread, simulando a entrada e saída do banheiro
+    public void run() {
+        try {
+            banheiro.entrar(generoPessoa, id); // Tenta entrar no banheiro
+            Thread.sleep((long) (Math.random() * 1000)); // Simula o tempo dentro do banheiro
+            banheiro.sair(generoPessoa, id); // Sai do banheiro
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+// Classe principal para execução do programa
 public class BanheiroUnissex {
+    public static void main(String[] args) {
+        Banheiro banheiro = new Banheiro(3); // Cria um banheiro com capacidade para 3 pessoas
 
-    public static class Banheiro {
-        private static final int CAPACIDADE_MAXIMA = 3;
-        private int ocupacaoAtual = 0;
-        private String generoAtual = "";
-        private final Lock tranca = new ReentrantLock();
-        private final Condition condicao = tranca.newCondition();
-
-        // Método para gerenciar a entrada no banheiro
-        public void entrar(Pessoa pessoa) throws InterruptedException {
-            tranca.lock();
-            try {
-                // Espera enquanto houver pessoas de outro gênero no banheiro ou estiver lotado
-                while (!generoAtual.isEmpty() && !generoAtual.equals(pessoa.obterGenero()) || ocupacaoAtual >= CAPACIDADE_MAXIMA) {
-                    condicao.await();
-                }
-                ocupacaoAtual++;
-                if (ocupacaoAtual == 1) {
-                    generoAtual = pessoa.obterGenero(); // Define o gênero atual ao entrar a primeira pessoa
-                }
-                System.out.println(pessoa.obterNome() + " (" + pessoa.obterGenero() + ") entrou no banheiro.");
-                System.out.println("Ocupação Atual:" + (ocupacaoAtual));
-            } finally {
-                tranca.unlock();
-            }
+        // Cria e inicia 10 threads, cada uma representando uma pessoa
+        for (int i = 1; i <= 10; i++) {
+            Pessoa pessoa = new Pessoa(banheiro, i % 2 == 0 ? "homem" : "mulher", i);
+            new Thread(pessoa).start();
         }
-
-        // Método para gerenciar a saída do banheiro
-        public void sair(Pessoa pessoa) {
-            tranca.lock();
-            try {
-                ocupacaoAtual--;
-                System.out.println(pessoa.obterNome() + " (" + pessoa.obterGenero() + ") saiu do banheiro.");
-                System.out.println("Ocupação Atual:" + (ocupacaoAtual));
-                if (ocupacaoAtual == 0) {
-                    generoAtual = ""; // Reseta o gênero atual quando o banheiro fica vazio
-                }
-                condicao.signalAll(); // Acorda todas as threads aguardando
-            } finally {
-                tranca.unlock();
-            }
-        }
-    }
-
-    // Classe Pessoa com atributos nome e gênero
-    public static class Pessoa {
-        private final String nome;
-        private final String genero;
-
-        public Pessoa(String nome, String genero) {
-            this.nome = nome;
-            this.genero = genero;
-        }
-
-        public String obterNome() {
-            return nome;
-        }
-
-        public String obterGenero() {
-            return genero;
-        }
-    }
-
-    // Classe Runnable para simular o uso do banheiro
-    public static class UsoBanheiro implements Runnable {
-        private final Banheiro banheiro;
-        private final Pessoa pessoa;
-
-        public UsoBanheiro(Banheiro banheiro, Pessoa pessoa) {
-            this.banheiro = banheiro;
-            this.pessoa = pessoa;
-        }
-
-        // Método run que gerencia a entrada, permanência e saída do banheiro
-        public void run() {
-            try {
-                banheiro.entrar(pessoa);
-                Thread.sleep((long) (Math.random() * 500)); // Simula o tempo de uso do banheiro
-                banheiro.sair(pessoa);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-        }
-    }
-
-    public static void main(String[] args) throws InterruptedException {
-        Banheiro banheiro = new Banheiro();
-
-        // Criação de 50 homens e 50 mulheres
-        Pessoa[] pessoas = new Pessoa[100];
-        for (int i = 0; i < 50; i++) {
-            pessoas[i] = new Pessoa("Homem" + (i + 1), "Masculino");
-            pessoas[i + 50] = new Pessoa("Mulher" + (i + 1), "Feminino");
-        }
-
-        // Criação e inicialização de threads para cada pessoa
-        Thread[] threads = new Thread[pessoas.length];
-        for (int i = 0; i < pessoas.length; i++) {
-            threads[i] = new Thread(new UsoBanheiro(banheiro, pessoas[i]));
-        }
-
-        // Inicia todas as threads
-        for (Thread thread : threads) {
-            thread.start();
-        }
-
-        // Aguarda todas as threads terminarem
-        for (Thread thread : threads) {
-            thread.join();
-        }
-
     }
 }
